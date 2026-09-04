@@ -1,0 +1,48 @@
+{
+    // Open this folder, or the parent ShelfWatch.code-workspace.
+    // After creating a venv: Ctrl+Shift+P → "Python: Select Interpreter" → .venv
+
+    "python.defaultInterpreterPath": "D:\\ProgramFilesSDKs\\python.exe",
+    "python.languageServer": "Pylance",
+    "python.terminal.activateEnvironment": true,
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.indexing": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "ruff.nativeServer": "on",
+    "ruff.importStrategy": "useBundled",
+    "ruff.lint.enable": true,
+    "ruff.organizeImports": true,
+    "errorLens.enabled": true,
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.associations": {
+        "**/templates/**/*.html": "django-html",
+        "**/templates/**/*.txt": "django-txt"
+    },
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    },
+    "[python]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "[django-html]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": false
+    },
+    "[markdown]": {
+        "editor.wordWrap": "on"
+    }
+}

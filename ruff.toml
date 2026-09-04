@@ -1,0 +1,27 @@
+# Ruff is the linter + formatter. The VS Code Ruff extension uses this file.
+# target-version matches the Python we are learning on (3.12).
+
+target-version = "py312"
+line-length = 88
+
+[lint]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "I",  # isort
+    "UP", # pyupgrade
+    "B",  # bugbear (likely bugs)
+    "SIM",# simplify
+]
+ignore = [
+    "E501", # line length: formatter handles this
+]
+
+[lint.isort]
+known-first-party = ["apps", "config"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
