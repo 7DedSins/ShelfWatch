@@ -49,11 +49,12 @@ def test_timestamps_set_on_create_and_update():
 
 
 def test_name_field_is_unique_in_schema():
-    # No database: this only reads model._meta (the schema Django loaded).
+    # No database: this only reads model._meta.
+    # getattr: Pylance's Django types omit Field.unique / max_length without django-stubs.
     field = Service._meta.get_field("name")
     assert isinstance(field, CharField)
-    assert field.unique is True
-    assert field.max_length == 200
+    assert getattr(field, "unique") is True
+    assert getattr(field, "max_length") == 200
 
 
 @pytest.mark.django_db
