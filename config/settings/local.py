@@ -6,6 +6,7 @@ from .base import *
 env = environ.Env()
 env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
+FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -14,6 +14,7 @@ def test_service_is_registered_with_service_admin():
 
 def test_service_admin_list_and_search_config():
     assert ServiceAdmin.list_display == ("name", "url", "created_at", "updated_at")
+    assert "api_key" not in ServiceAdmin.list_display
     assert ServiceAdmin.search_fields == ("name",)
     assert ServiceAdmin.readonly_fields == ("created_at", "updated_at")
 
