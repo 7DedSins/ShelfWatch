@@ -83,7 +83,7 @@
 |---|---|
 | Do not open `D:\Github Projects` as the VS Code folder | It indexes KomaReader/Unity/Android `build/` (~100k files). Open `ShelfWatch.code-workspace` only. |
 | No Docker Desktop alongside VS Code on this machine | ~15 GB RAM, ~3.6 GB free. Django + SQLite locally; Postgres/Redis/Celery later on Contabo or when RAM allows. |
-| AI does not write implementation code | Six months of prompt-and-review atrophied writing. Rehab: type it, AI reviews. |
+| AI does not write implementation code | Six months of prompt-and-review atrophied writing. Rehab: type it, AI reviews. **Exception 2026-09-06:** user authorized AI-written tests only (`apps/*/tests/`). |
 | Public GitHub yes; daily X/“learning in public” no | 4 YOE backend. GitHub + LinkedIn are the job surface. Bootcamp-style streaks would read as junior. |
 | Ruff only (not Black/flake8/pylint/mypy) | One linter. Pylance `basic` for types. |
 
