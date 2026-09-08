@@ -3,9 +3,9 @@
 > **This file is the state of the project.** Update it every session. An AI resuming your work
 > reads this first.
 
-**Current position:** Phase 0 — orientation understood; environment next. Python writing rehab before Django. **Do not start m00.**
-**Last session:** 2026-09-04 — product + teaching contract + VS Code RAM setup. Docker skipped on the laptop.
-**Next action:** Open `ShelfWatch.code-workspace`. Create `D:\learn\python-rehab` venv. Evening-1 script (walk a folder, print name/size/mtime) typed by hand. Paste it here.
+**Current position:** Phase 1 — **m02** `feat/kavita-connector`. Kavita connector + respx tests (8 passed). Tests are `[!]` (AI-written).
+**Last session:** 2026-09-07 — user granted AI tests + comments.
+**Next action:** Explain each test out loud. Then Komga/registry **or** open the PR. No Celery.
 
 ---
 
@@ -19,19 +19,20 @@
 
 - [x] 01 What we are building
 - [x] 02 How to use these docs (teaching contract)
-- [~] 03 Prerequisites and setup — Docker **not** on this laptop (RAM). SQLite + venv until Celery/VPS. VS Code workspace + Ruff/Pylance done. Python 3.12 at `D:\ProgramFilesSDKs\python.exe`. Writing rehab not started.
+- [x] 03 Prerequisites and setup — Docker **not** on this laptop (RAM). SQLite + venv. VS Code workspace + Ruff/Pylance. Python 3.12 at `D:\ProgramFilesSDKs\python.exe`. Writing rehab is the connector work (type, AI reviews).
 
 ## Phase 1 — Foundations
 
-- [ ] **m00** Skeleton
-  - [ ] django/01 Django vs Flask
-  - [ ] django/02 Settings and project layout
-- [ ] **m01** Services and health
-  - [ ] django/03 Models and migrations
-  - [ ] django/05 The Django admin
-  - [ ] concepts/03 Secrets at rest
-- [ ] **m02** Connectors
-  - [ ] concepts/01 Polling and reconciliation
+- [x] **m00** Skeleton (partial vs original: no Docker, no six apps). Django 6.1, `config/`, split settings, django-environ. PRs 1–2.
+- [x] **m01** Services and health. `Service` + encrypted `api_key`, admin, `/healthz/`, pytest in `apps/<app>/tests/`. PRs 3–6.
+  - [x] django/03 Models and migrations *(used; interview explain still needed)*
+  - [x] django/05 The Django admin
+  - [x] concepts/03 Secrets at rest — Fernet process key vs per-row Kavita key; hashing is wrong for API keys
+- [~] **m02** Connectors
+  - [x] `apps/services/connectors/base.py` — frozen dataclasses, three errors, ABC; user typed
+  - [x] `kavita.py` HTTP — user typed JWT, libraries, series (all-v2 + client filter)
+  - [!] respx tests — AI-written 2026-09-07; 8 passed; user must explain each case
+  - [!] concepts/01 Polling and reconciliation — taught; user could not explain empty vs `[]` at first — revisit out loud
 
 ## Phase 2 — The engine
 
@@ -83,9 +84,13 @@
 |---|---|
 | Do not open `D:\Github Projects` as the VS Code folder | It indexes KomaReader/Unity/Android `build/` (~100k files). Open `ShelfWatch.code-workspace` only. |
 | No Docker Desktop alongside VS Code on this machine | ~15 GB RAM, ~3.6 GB free. Django + SQLite locally; Postgres/Redis/Celery later on Contabo or when RAM allows. |
-| AI does not write implementation code | Six months of prompt-and-review atrophied writing. Rehab: type it, AI reviews. **Exception 2026-09-06:** user authorized AI-written tests only (`apps/*/tests/`). |
+| AI does not write implementation code | Rehab: type it, AI reviews. **Exception 2026-09-06:** tests. **Exception 2026-09-07:** user granted AI the Kavita **test suite** + comments on `kavita.py`. **Cannot defend those tests in an interview until explained out loud.** `kavita.py` logic was user-typed. |
 | Public GitHub yes; daily X/“learning in public” no | 4 YOE backend. GitHub + LinkedIn are the job surface. Bootcamp-style streaks would read as junior. |
 | Ruff only (not Black/flake8/pylint/mypy) | One linter. Pylance `basic` for types. |
+| Connector returns frozen dataclasses, never vendor JSON | Kavita field names must not leak; adding Komga/Jellyfin is one file. |
+| Connector timeout **raises**, never `[]` | Empty inventory vs failed fetch must be different types or m05 will mark every series deleted. |
+| `active_scans` default `[]` on the ABC, not abstract | Optional capability; not every vendor has running scans. |
+| Retries live in Celery (later), not the connector | One exception later: single re-auth on Kavita 401. |
 
 ---
 
@@ -113,6 +118,16 @@
 ## Session log
 
 ```
+### 2026-09-07 — Kavita connector + AI tests
+Did: User typed kavita.py (JWT, libraries, all-v2 series + client filter). AI added comments, json/params keywords, series JSON guard; respx suite (8 tests). User granted this — cannot defend tests until explained.
+Struggled with: DevTools empty on Tailscale UI; `/library/7` vs `/api/Library/libraries`; `_send` not forwarding json; int vs str libraryId.
+Decided: No live VPS in CI. Komga/registry not this commit.
+Next: User explains timeout vs []. Then registry or Komga, or PR.
+### 2026-09-06 — m02 base connector
+Did: Branch `feat/kavita-connector` from main (PR #6). Typed `apps/services/connectors/base.py` (+ empty `__init__.py`). Validated: HealthResult/RemoteLibrary/RemoteSeries frozen; ConnectorError + Unavailable/AuthFailed/BadResponse; ABC health/list_libraries/list_series iterator; active_scans default []. No HTTP yet.
+Struggled with: Could not initially explain why timeout ≠ `[]`, or what to put in base.py. Needed samples (dataclass, ABC, exceptions) then assembled.
+Decided: First file is the contract, not Kavita HTTP. Do not start komga/lanraragi/registry this session.
+Next: Say empty-vs-failure in own words. Type `kavita.py`.
 ### 2026-09-04 — orientation + VS Code
 Did: Read product + teaching contract. Inspected GitHub (7DedSins) and resume. Configured VS Code (parent RAM guards, ShelfWatch.code-workspace, Ruff/Pylance/Django/Error Lens, ruff.toml).
 Struggled with: VS Code RAM with parent folder open; Grok sessions are cwd-scoped so this chat does not appear in the ShelfWatch window.
