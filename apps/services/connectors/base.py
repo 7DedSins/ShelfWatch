@@ -23,19 +23,19 @@ class RemoteSeries:
 
 
 class ConnectorError(Exception):
-    pass
+    """Any connector failure. Catch this or one of the three subclasses."""
 
 
 class ServiceUnavailable(ConnectorError):
-    pass
+    """Timeout, DNS, connection refused — do not treat as empty inventory."""
 
 
 class ServiceAuthFailed(ConnectorError):
-    pass
+    """Credentials rejected. Do not retry; the key will not improve."""
 
 
 class ServiceBadResponse(ConnectorError):
-    pass
+    """Reached the service but the body is unusable (HTML, missing keys)."""
 
 
 class BaseConnector(ABC):

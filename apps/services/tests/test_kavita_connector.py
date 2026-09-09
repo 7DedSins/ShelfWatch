@@ -117,6 +117,23 @@ def test_series_filters_client_side_by_library_id():
 
 
 @respx.mock
+def test_series_timeout_raises_unavailable():
+    _mock_authenticate()
+    respx.post(url__regex=rf"{BASE}/api/series/all-v2.*").mock(
+        side_effect=httpx.TimeoutException("timed out")
+    )
+    with pytest.raises(ServiceUnavailable):
+        list(_connector().list_series("7"))
+
+
+@respx.mock
+def test_series_non_int_library_id_raises_bad_response():
+    _mock_authenticate()
+    with pytest.raises(ServiceBadResponse):
+        list(_connector().list_series("not-an-id"))
+
+
+@respx.mock
 def test_health_retries_once_on_401_then_succeeds():
     _mock_authenticate()
     respx.get(f"{BASE}/api/Health").mock(

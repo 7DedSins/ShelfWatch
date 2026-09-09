@@ -30,10 +30,10 @@ class KavitaConnector(BaseConnector):
                 "/api/Plugin/authenticate",
                 params={"apiKey": self._api_key, "pluginName": "ShelfWatch"},
             )
-        except httpx.TimeoutException as exc:
-            raise ServiceUnavailable("Kavita authenticate timed out") from exc
-        except httpx.NetworkError as exc:
-            raise ServiceUnavailable("Kavita authenticate unreachable") from exc
+        except httpx.TimeoutException as extra:
+            raise ServiceUnavailable("Kavita authenticate timed out") from extra
+        except httpx.NetworkError as extra:
+            raise ServiceUnavailable("Kavita authenticate unreachable") from extra
 
         if response.status_code in (401, 403):
             raise ServiceAuthFailed("Kavita rejected the API key")
@@ -43,8 +43,8 @@ class KavitaConnector(BaseConnector):
         try:
             payload = response.json()
             token = payload["token"]
-        except (ValueError, KeyError, TypeError) as exc:
-            raise ServiceBadResponse("Kavita authenticate returned no token") from exc
+        except (ValueError, KeyError, TypeError) as extra:
+            raise ServiceBadResponse("Kavita authenticate returned no token") from extra
 
         self._token = token
 
@@ -92,10 +92,10 @@ class KavitaConnector(BaseConnector):
             return self._client.request(
                 method, path, headers=self._auth_headers(), json=json, params=params
             )
-        except httpx.TimeoutException as exc:
-            raise ServiceUnavailable("Kavita request timed out") from exc
-        except httpx.NetworkError as exc:
-            raise ServiceUnavailable("Kavita unreachable") from exc
+        except httpx.TimeoutException as extra:
+            raise ServiceUnavailable("Kavita request timed out") from extra
+        except httpx.NetworkError as extra:
+            raise ServiceUnavailable("Kavita unreachable") from extra
 
     def health(self) -> HealthResult:
         self._request("GET", "/api/Health")
@@ -103,19 +103,25 @@ class KavitaConnector(BaseConnector):
 
     def list_libraries(self) -> list[RemoteLibrary]:
         # UI route /library/7 is Angular, not this. List all libraries:
-        response = self._request("GET", "/api/Library/libraries")
+        payload = self._json_list(
+            self._request("GET", "/api/Library/libraries"), "libraries"
+        )
         try:
-            payload = response.json()
-        except ValueError as exc:
-            raise ServiceBadResponse("Kavita libraries not JSON") from exc
-        if not isinstance(payload, list):
-            raise ServiceBadResponse("Kavita libraries not a list")
-        return [
-            RemoteLibrary(id=str(item["id"]), name=str(item["name"]))
-            for item in payload
-        ]
+            return [
+                RemoteLibrary(id=str(item["id"]), name=str(item["name"]))
+                for item in payload
+            ]
+        except KeyError as extra:
+            raise ServiceBadResponse("Kavita library missing id/name") from extra
 
     def list_series(self, library_id: str) -> Iterator[RemoteSeries]:
+        try:
+            body_library_id = int(library_id)
+        except ValueError as extra:
+            raise ServiceBadResponse(
+                f"Kavita library_id not an int: {library_id!r}"
+            ) from extra
+
         page = 1
         page_size = 100
 
@@ -123,27 +129,25 @@ class KavitaConnector(BaseConnector):
             # Kavita's all-v2 ignores libraryId in the body (confirmed quirk).
             # We still send it, then filter client-side so we do not invent an
             # empty library from "other libraries' series" or from a timeout.
-            response = self._request(
-                "POST",
-                "/api/series/all-v2",
-                json={"libraryId": int(library_id)},
-                params={"PageNumber": page, "PageSize": page_size},
+            payload = self._json_list(
+                self._request(
+                    "POST",
+                    "/api/series/all-v2",
+                    json={"libraryId": body_library_id},
+                    params={"PageNumber": page, "PageSize": page_size},
+                ),
+                "series",
             )
-
-            try:
-                payload = response.json()
-            except ValueError as exc:
-                raise ServiceBadResponse("Kavita series not JSON") from exc
-            if not isinstance(payload, list):
-                raise ServiceBadResponse("Kavita series not a list")
 
             for item in payload:
                 try:
                     item_library_id = str(item["libraryId"])
                     series_id = str(item["id"])
                     name = str(item["name"])
-                except KeyError as exc:
-                    raise ServiceBadResponse("Kavita series row missing fields") from exc
+                except KeyError as extra:
+                    raise ServiceBadResponse(
+                        "Kavita series row missing fields"
+                    ) from extra
                 if item_library_id != str(library_id):
                     continue
                 yield RemoteSeries(
@@ -157,3 +161,12 @@ class KavitaConnector(BaseConnector):
             if len(payload) < page_size:
                 break
             page += 1
+
+    def _json_list(self, response: httpx.Response, label: str) -> list:
+        try:
+            payload = response.json()
+        except ValueError as extra:
+            raise ServiceBadResponse(f"Kavita {label} not JSON") from extra
+        if not isinstance(payload, list):
+            raise ServiceBadResponse(f"Kavita {label} not a list")
+        return payload
