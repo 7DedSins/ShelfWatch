@@ -3,9 +3,9 @@
 > **This file is the state of the project.** Update it every session. An AI resuming your work
 > reads this first.
 
-**Current position:** Phase 1 — **m02**. Kavita + LANraragi + registry. 26 tests passed (Kavita respx `[!]`; no LRR respx yet).
-**Last session:** 2026-09-09 — LRR parse AI-fixed; Kavita/`base`/registry/admin aligned to same JSON-guard style.
-**Next action:** LRR respx tests (you type or grant). Stash mapping on paper. No Celery.
+**Current position:** Phase 1 done for connectors (on `main`). Next: naive poll, then Celery, Stash last.
+**Last session:** 2026-09-09 — user chose order: poll-health → Celery → Stash last (not Stash before the engine).
+**Next action:** Admin “Test connection” still open. Then Celery when Redis exists. Stash last.
 
 ---
 
@@ -94,6 +94,8 @@
 | `active_scans` default `[]` on the ABC, not abstract | Optional capability; not every vendor has running scans. |
 | Retries live in Celery (later), not the connector | One exception later: single re-auth on Kavita 401. |
 | Watch **every app on the VPS**, not only manga readers | 2026-09-09: live set is Kavita, LANraragi, Stash (Komga not running). Stash is in scope; it does not fit library/series without stretching the ABC. |
+| Order: poll → Celery → engine → Stash last | Naive Django poll first (no Redis). Celery when Redis exists (VPS). Disk/reconcile on Kavita+LRR before a Stash GraphQL client. |
+| Order: poll → Celery → engine → Stash last | Naive Django poll first (no Redis). Celery when Redis exists (VPS). Disk/reconcile on Kavita+LRR before a Stash GraphQL client. |
 
 ---
 
