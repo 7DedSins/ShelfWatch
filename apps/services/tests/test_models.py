@@ -21,6 +21,12 @@ def test_different_names_are_allowed():
 
 
 @pytest.mark.django_db
+def test_kind_defaults_to_kavita():
+    service = Service.objects.create(name="Kavita", url="https://example.com")
+    assert service.kind == Service.Kind.KAVITA
+
+
+@pytest.mark.django_db
 def test_str_returns_name():
     service = Service.objects.create(name="LANraragi", url="https://lrr.example.com")
     assert str(service) == "LANraragi"

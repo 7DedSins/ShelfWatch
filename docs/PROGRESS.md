@@ -3,9 +3,9 @@
 > **This file is the state of the project.** Update it every session. An AI resuming your work
 > reads this first.
 
-**Current position:** Phase 1 — **m02** `feat/kavita-connector`. Kavita connector + respx tests (8 passed). Tests are `[!]` (AI-written).
-**Last session:** 2026-09-07 — user granted AI tests + comments.
-**Next action:** Explain each test out loud. Then Komga/registry **or** open the PR. No Celery.
+**Current position:** Phase 1 — **m02**. Kavita + LANraragi + registry. 26 tests passed (Kavita respx `[!]`; no LRR respx yet).
+**Last session:** 2026-09-09 — LRR parse AI-fixed; Kavita/`base`/registry/admin aligned to same JSON-guard style.
+**Next action:** LRR respx tests (you type or grant). Stash mapping on paper. No Celery.
 
 ---
 
@@ -31,7 +31,9 @@
 - [~] **m02** Connectors
   - [x] `apps/services/connectors/base.py` — frozen dataclasses, three errors, ABC; user typed
   - [x] `kavita.py` HTTP — user typed JWT, libraries, series (all-v2 + client filter)
-  - [!] respx tests — AI-written 2026-09-07; 8 passed; user must explain each case
+  - [~] `lanraragi.py` — user typed auth/health; **AI fixed** search pagination + category filter 2026-09-09 (`[!]` until explained)
+  - [x] `registry.py` + `Service.kind`
+  - [!] respx tests — AI-written; 46 services tests passed 2026-09-09 (Kavita + LRR + registry). Explain before interview.
   - [!] concepts/01 Polling and reconciliation — taught; user could not explain empty vs `[]` at first — revisit out loud
 
 ## Phase 2 — The engine
@@ -91,6 +93,7 @@
 | Connector timeout **raises**, never `[]` | Empty inventory vs failed fetch must be different types or m05 will mark every series deleted. |
 | `active_scans` default `[]` on the ABC, not abstract | Optional capability; not every vendor has running scans. |
 | Retries live in Celery (later), not the connector | One exception later: single re-auth on Kavita 401. |
+| Watch **every app on the VPS**, not only manga readers | 2026-09-09: live set is Kavita, LANraragi, Stash (Komga not running). Stash is in scope; it does not fit library/series without stretching the ABC. |
 
 ---
 
@@ -111,7 +114,7 @@
 
 ## Open questions I still have
 
-- (none yet)
+- How does `RemoteLibrary` / `RemoteSeries` map to Stash scenes/galleries without lying? New dataclasses vs a wider inventory type?
 
 ---
 
