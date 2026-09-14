@@ -119,3 +119,23 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+# Celery — policy. Broker URL is per-environment (local.py / tests.py).
+# No CELERY_RESULT_BACKEND: health is on Service, not in Redis.
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_QUEUES = {
+    "default": {"exchange": "default", "routing_key": "default"},
+    "scans": {"exchange": "scans", "routing_key": "scans"},
+}
+CELERY_TASK_ROUTES = {
+    "apps.services.tasks.schedule_polls": {"queue": "default"},
+    "apps.services.tasks.poll_service": {"queue": "default"},
+}
+CELERY_BEAT_SCHEDULE = {
+    "schedule-polls-every-60s": {
+        "task": "apps.services.tasks.schedule_polls",
+        "schedule": 60.0,
+    },
+}
