@@ -3,9 +3,9 @@
 > **This file is the state of the project.** Update it every session. An AI resuming your work
 > reads this first.
 
-**Current position:** Phase 1 done for connectors (on `main`). Next: naive poll, then Celery, Stash last.
-**Last session:** 2026-09-09 — user chose order: poll-health → Celery → Stash last (not Stash before the engine).
-**Next action:** Admin “Test connection” still open. Then Celery when Redis exists. Stash last.
+**Current position:** m03 in progress on `feat/celery-poll` (Celery wire + persist + admin action uncommitted). Spine: finish m03 (concepts/02 → django/07 → schedule_polls → Beat/queues/locks when Redis exists) → m04 → m05. Stash last.
+**Last session:** 2026-09-11 — follow original docs; teaching map changed: AI pastes next slice in chat + gotchas; user types; no repo writes of implementation.
+**Next action:** User types `poll_interval_seconds` + naive `schedule_polls` from the chat walkthrough. Then django/07.
 
 ---
 
@@ -38,9 +38,10 @@
 
 ## Phase 2 — The engine
 
-- [ ] **m03** Celery and polling
+- [~] **m03** Celery and polling — wire+persist+admin on branch; Beat/two queues/locks not started
   - [ ] django/07 Celery and Beat
-  - [ ] concepts/02 Scheduled work and idempotency
+  - [~] concepts/02 Scheduled work and idempotency — taught in chat 2026-09-11; check-five not yet answered out loud `[!]` until they are
+  - [~] `poll_interval_seconds` + naive `schedule_polls` (SQLite loop, `.delay`); tests AI-written `[!]`
 - [ ] **m04** Library scanning
   - [ ] django/04 ORM and query optimization
 - [ ] **m05** Reconciliation *(tests first)*
@@ -95,7 +96,7 @@
 | Retries live in Celery (later), not the connector | One exception later: single re-auth on Kavita 401. |
 | Watch **every app on the VPS**, not only manga readers | 2026-09-09: live set is Kavita, LANraragi, Stash (Komga not running). Stash is in scope; it does not fit library/series without stretching the ABC. |
 | Order: poll → Celery → engine → Stash last | Naive Django poll first (no Redis). Celery when Redis exists (VPS). Disk/reconcile on Kavita+LRR before a Stash GraphQL client. |
-| Order: poll → Celery → engine → Stash last | Naive Django poll first (no Redis). Celery when Redis exists (VPS). Disk/reconcile on Kavita+LRR before a Stash GraphQL client. |
+| Teaching: code in chat, then I type | 2026-09-11. Drop skeleton-first. AI pastes one slice in chat with gotchas; I type; AI does not write implementation files. `[!]` if I cannot explain a line. |
 
 ---
 

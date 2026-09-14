@@ -1,10 +1,14 @@
+from unittest.mock import patch
+
 import pytest
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
 
 from apps.services.admin import ServiceAdmin
+from apps.services.connectors.base import HealthResult, ServiceUnavailable
 from apps.services.models import Service
 
 
@@ -29,10 +33,54 @@ def test_service_admin_list_and_search_config():
         "created_at",
         "updated_at",
         "kind",
+        "last_health_ok",
+        "last_polled_at",
+        "poll_interval_seconds",
     )
     assert "api_key" not in ServiceAdmin.list_display
     assert ServiceAdmin.search_fields == ("name",)
-    assert ServiceAdmin.readonly_fields == ("created_at", "updated_at")
+    assert ServiceAdmin.readonly_fields == (
+        "created_at",
+        "updated_at",
+        "last_health_ok",
+        "last_polled_at",
+    )
+    assert "test_connection" in ServiceAdmin.actions
+
+
+def _admin_request():
+    request = RequestFactory().post("/admin/")
+    request.session = {}
+    request._messages = FallbackStorage(request)
+    return request
+
+
+@pytest.mark.django_db
+def test_test_connection_action_success_message():
+    service = Service.objects.create(name="Kavita", url="http://kavita.test")
+    admin_instance = ServiceAdmin(Service, admin.site)
+    request = _admin_request()
+    with patch(
+        "apps.services.admin.poll_health",
+        return_value=HealthResult(ok=True, detail="up"),
+    ):
+        admin_instance.test_connection(request, Service.objects.filter(pk=service.pk))
+    stored = list(request._messages)
+    assert any("Kavita" in str(m) and "ok=True" in str(m) for m in stored)
+
+
+@pytest.mark.django_db
+def test_test_connection_action_error_message():
+    service = Service.objects.create(name="Kavita", url="http://down.test")
+    admin_instance = ServiceAdmin(Service, admin.site)
+    request = _admin_request()
+    with patch(
+        "apps.services.admin.poll_health",
+        side_effect=ServiceUnavailable("timed out"),
+    ):
+        admin_instance.test_connection(request, Service.objects.filter(pk=service.pk))
+    stored = list(request._messages)
+    assert any(m.level == messages.ERROR and "timed out" in str(m) for m in stored)
 
 
 @pytest.mark.django_db

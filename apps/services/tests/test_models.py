@@ -65,6 +65,18 @@ def test_name_field_is_unique_in_schema():
 
 
 @pytest.mark.django_db
+def test_full_clean_rejects_zero_poll_interval():
+    service = Service(
+        name="Kavita",
+        url="https://example.com",
+        poll_interval_seconds=0,
+    )
+    with pytest.raises(ValidationError) as exc:
+        service.full_clean()
+    assert "poll_interval_seconds" in exc.value.message_dict
+
+
+@pytest.mark.django_db
 def test_full_clean_rejects_blank_name():
     service = Service(name="", url="https://example.com")
     with pytest.raises(ValidationError) as exc:

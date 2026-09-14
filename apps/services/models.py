@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.services.fields import EncryptedTextField
@@ -16,6 +17,15 @@ class Service(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     api_key = EncryptedTextField(blank=True)
     kind = models.CharField(max_length=32, choices=Kind.choices, default=Kind.KAVITA)
+    # NULL = never polled (not the same as False = polled and failed).
+    last_health_ok = models.BooleanField(null=True, blank=True)
+    last_polled_at = models.DateTimeField(null=True, blank=True)
+    # Due-ness is this column vs last_polled_at, not a Beat crontab per service.
+    # PositiveIntegerField allows 0; MinValueValidator is full_clean/admin only.
+    poll_interval_seconds = models.PositiveIntegerField(
+        default=60,
+        validators=[MinValueValidator(1)],
+    )
 
     class Meta:
         ordering = ["name"]
