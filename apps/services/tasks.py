@@ -8,11 +8,18 @@ from datetime import timedelta
 from celery import shared_task
 from django.utils import timezone
 
+from apps.services.connectors.base import ServiceUnavailable
+
 from .health import poll_health
 from .models import Service
 
 
-@shared_task
+@shared_task(
+    autoretry_for=(ServiceUnavailable,),
+    retry_backoff=True,
+    retry_jitter=True,
+    max_retries=5,
+)
 def poll_service(service_id: int) -> None:
     # Load inside the worker. Do not pass a Service — JSON cannot pickle the row.
     service = Service.objects.get(pk=service_id)
@@ -29,8 +36,12 @@ def schedule_polls() -> int:
     count = 0
     rows = Service.objects.values_list("pk", "last_polled_at", "poll_interval_seconds")
     for service_id, last_polled_at, interval in rows:
-        if last_polled_at is None or last_polled_at + timedelta(seconds=interval) <= now:
+        if (
+            last_polled_at is None
+            or last_polled_at + timedelta(seconds=interval) <= now
+        ):
             # .delay fans out; calling poll_service() would HTTP inside the scheduler.
-            poll_service.delay(service_id)
+            # Pylance types @shared_task as the raw function; Task.delay exists at runtime.
+            poll_service.delay(service_id)  # type: ignore[attr-defined]
             count += 1
     return count
