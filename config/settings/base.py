@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "apps.services",
     "apps.core",
+    "apps.libraries",
 ]
 
 MIDDLEWARE = [
@@ -132,10 +133,16 @@ CELERY_TASK_QUEUES = {
 CELERY_TASK_ROUTES = {
     "apps.services.tasks.schedule_polls": {"queue": "default"},
     "apps.services.tasks.poll_service": {"queue": "default"},
+    "apps.libraries.tasks.schedule_scans": {"queue": "default"},
+    "apps.libraries.tasks.scan_library_task": {"queue": "scans"},
 }
 CELERY_BEAT_SCHEDULE = {
     "schedule-polls-every-60s": {
         "task": "apps.services.tasks.schedule_polls",
+        "schedule": 60.0,
+    },
+    "schedule-scans-every-60s": {
+        "task": "apps.libraries.tasks.schedule_scans",
         "schedule": 60.0,
     },
 }

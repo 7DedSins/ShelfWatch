@@ -3,9 +3,9 @@
 > **This file is the state of the project.** Update it every session. An AI resuming your work
 > reads this first.
 
-**Current position:** m03 on `feat/beats-and-queues`. Celery wire+persist+fan-out merged (PR #10). This branch: Beat/queues settings, retry on `poll_service`. Locks and starvation wait for Redis. Then m04 → m05. Stash last.
-**Last session:** 2026-09-11 — django/07 settings + `ServiceUnavailable` retries (max_retries=5, backoff+jitter). User confirmed they understand so far.
-**Next action:** GitHub Actions pytest on PRs + push to `main` (no image, no VPS). Then Redis lock or m04.
+**Current position:** m04 on `feat/library-scan` (uncommitted). m03 Beat/queues/retries + pytest CI on `main` (PR #11). Lock/starvation still need Redis. Then bulk scan → m05. Stash last.
+**Last session:** 2026-09-15 — Library/DiskItem/StorageSnapshot + naive `scan_library` (`update_or_create`). UTC; `seen_at` detects deletes without removing rows.
+**Next action:** Time naive upsert vs chunked `bulk_create`. Then task on `scans` queue. Do not skip m05.
 
 ---
 
@@ -38,13 +38,13 @@
 
 ## Phase 2 — The engine
 
-- [~] **m03** Celery and polling — PR #10 on main; Beat/queues/retries on `feat/beats-and-queues`; lock/starvation not started
-  - [~] django/07 Celery and Beat — settings + retries taught; two workers / `.s` vs `.si` / lock not done
-  - [~] concepts/02 Scheduled work and idempotency — taught; lock failure modes not implemented
-  - [x] `poll_interval_seconds` + naive `schedule_polls` (SQLite loop, `.delay`); tests AI-written `[!]`
-  - [~] `CELERY_BEAT_SCHEDULE` + `default`/`scans` routes; `poll_service` retries Unavailable only `[!]` tests
-- [ ] **m04** Library scanning
-  - [ ] django/04 ORM and query optimization
+- [~] **m03** Celery and polling — PRs #10–#11 on main; lock/starvation/two workers not started
+  - [~] django/07 — settings + retries taught; two workers / `.s` vs `.si` / lock not done
+  - [~] concepts/02 — taught; lock not implemented
+  - [x] `poll_interval_seconds` + naive `schedule_polls`; tests `[!]`
+  - [x] Beat + `default`/`scans` routes + Unavailable retries + pytest GHA `[!]` tests
+- [~] **m04** Library scanning — models + naive `scan_library` on `feat/library-scan`
+  - [~] django/04 ORM — N+1/bulk taught; timings not recorded yet
 - [ ] **m05** Reconciliation *(tests first)*
 - [ ] **CHECKPOINT** — first system-design drill
 

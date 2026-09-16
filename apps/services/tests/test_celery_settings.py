@@ -33,10 +33,13 @@ def test_default_and_scans_queues_exist():
 
 
 def test_health_tasks_route_to_default_not_scans():
+    from apps.libraries.tasks import scan_library_task, schedule_scans
+
     routes = settings.CELERY_TASK_ROUTES
     assert routes[schedule_polls.name]["queue"] == "default"
     assert routes[poll_service.name]["queue"] == "default"
-    assert "scans" not in {r["queue"] for r in routes.values()}
+    assert routes[schedule_scans.name]["queue"] == "default"
+    assert routes[scan_library_task.name]["queue"] == "scans"
 
 
 def test_task_names_match_autodiscover():
@@ -45,10 +48,15 @@ def test_task_names_match_autodiscover():
 
 
 def test_beat_wakes_schedule_polls_every_60s():
+    from apps.libraries.tasks import schedule_scans
+
     entry = settings.CELERY_BEAT_SCHEDULE["schedule-polls-every-60s"]
     assert "tasks" not in entry
     assert entry["task"] == schedule_polls.name
     assert entry["schedule"] == 60.0
+    scans = settings.CELERY_BEAT_SCHEDULE["schedule-scans-every-60s"]
+    assert scans["task"] == schedule_scans.name
+    assert scans["schedule"] == 60.0
 
 
 def test_poll_service_retries_unavailable_only():
