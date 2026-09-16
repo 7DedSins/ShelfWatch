@@ -8,6 +8,7 @@ class LibraryAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "service",
+        "remote_id",
         "root_path",
         "last_scanned_at",
         "scan_interval_seconds",

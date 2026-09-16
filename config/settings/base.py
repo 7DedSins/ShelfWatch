@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.services",
     "apps.core",
     "apps.libraries",
+    "apps.reconcile",
 ]
 
 MIDDLEWARE = [
@@ -135,6 +136,7 @@ CELERY_TASK_ROUTES = {
     "apps.services.tasks.poll_service": {"queue": "default"},
     "apps.libraries.tasks.schedule_scans": {"queue": "default"},
     "apps.libraries.tasks.scan_library_task": {"queue": "scans"},
+    "apps.reconcile.tasks.reconcile_library": {"queue": "scans"},
 }
 CELERY_BEAT_SCHEDULE = {
     "schedule-polls-every-60s": {

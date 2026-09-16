@@ -37,9 +37,14 @@ def test_never_scanned_is_due():
     library = Library.objects.create(
         service=service, name="Manga", root_path="/tmp"
     )
-    with patch("apps.libraries.tasks.scan_library_task.delay") as delay:
+    with patch("apps.libraries.tasks.chain") as chain_fn:
         assert schedule_scans() == 1
-    delay.assert_called_once_with(library.pk)
+    chain_fn.assert_called_once()
+    scan_sig, recon_sig = chain_fn.call_args[0]
+    assert scan_sig.args == (library.pk,)
+    assert recon_sig.args == (library.pk,)
+    # Immutable: scan return value must not become reconcile's first arg.
+    assert recon_sig.immutable is True
 
 
 @pytest.mark.django_db
@@ -54,9 +59,9 @@ def test_recent_scan_within_interval_is_not_due():
         scan_interval_seconds=3600,
     )
     with patch("apps.libraries.tasks.timezone.now", return_value=now):
-        with patch("apps.libraries.tasks.scan_library_task.delay") as delay:
+        with patch("apps.libraries.tasks.chain") as chain_fn:
             assert schedule_scans() == 0
-    delay.assert_not_called()
+    chain_fn.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -71,6 +76,8 @@ def test_stale_scan_is_due():
         scan_interval_seconds=3600,
     )
     with patch("apps.libraries.tasks.timezone.now", return_value=now):
-        with patch("apps.libraries.tasks.scan_library_task.delay") as delay:
+        with patch("apps.libraries.tasks.chain") as chain_fn:
             assert schedule_scans() == 1
-    delay.assert_called_once_with(library.pk)
+    chain_fn.assert_called_once()
+    assert chain_fn.call_args[0][0].args == (library.pk,)
+    assert chain_fn.call_args[0][1].immutable is True
