@@ -34,12 +34,14 @@ def test_default_and_scans_queues_exist():
 
 def test_health_tasks_route_to_default_not_scans():
     from apps.libraries.tasks import scan_library_task, schedule_scans
+    from apps.reconcile.tasks import reconcile_library
 
     routes = settings.CELERY_TASK_ROUTES
     assert routes[schedule_polls.name]["queue"] == "default"
     assert routes[poll_service.name]["queue"] == "default"
     assert routes[schedule_scans.name]["queue"] == "default"
     assert routes[scan_library_task.name]["queue"] == "scans"
+    assert routes[reconcile_library.name]["queue"] == "scans"
 
 
 def test_task_names_match_autodiscover():

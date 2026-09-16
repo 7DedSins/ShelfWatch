@@ -2,8 +2,10 @@
 
 from datetime import timedelta
 
-from celery import shared_task
+from celery import chain, shared_task
 from django.utils import timezone
+
+from apps.reconcile.tasks import reconcile_library
 
 from .models import Library
 from .scan import scan_library
@@ -29,6 +31,13 @@ def schedule_scans() -> int:
             last_scanned_at + timedelta(seconds=interval) <= now
         )
         if due:
-            scan_library_task.delay(library_id)  # type: ignore[attr-defined]
+            # .s = signature (mutable): next task gets previous return as 1st arg.
+            # .si = immutable: args stay exactly what we pass. scan returns int count;
+            # reconcile_library(library_id) must not become (count, library_id).
+            # Pylance types @shared_task as a plain function (no .s / .si / .delay).
+            chain(
+                scan_library_task.s(library_id),  # type: ignore[attr-defined]
+                reconcile_library.si(library_id),  # type: ignore[attr-defined]
+            ).delay()
             count += 1
     return count

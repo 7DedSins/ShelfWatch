@@ -9,6 +9,8 @@ class Library(models.Model):
         related_name="libraries",
     )
     name = models.CharField(max_length=200)
+    # Vendor library/category id for list_series. Blank → reconcile skips.
+    remote_id = models.CharField(max_length=64, blank=True, default="")
     # VPS mount path; not a laptop FilePathField.
     root_path = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
