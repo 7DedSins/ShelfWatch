@@ -3,9 +3,9 @@
 > **This file is the state of the project.** Update it every session. An AI resuming your work
 > reads this first.
 
-**Current position:** m06 remainder on `feat/jwt-openapi` (from `main` after PR #14). Engine m00–m05 and the first DRF slice are on `main`. JWT/simplejwt **not typed yet**. Stash last. Do not start m07 on this branch.
-**Last session:** 2026-09-17 — Taught JWT + keep session. No implementation files written. `PROGRESS.md` backfilled (it was stuck on m04).
-**Next action:** Type JWT slice: `djangorestframework-simplejwt`, `JWTAuthentication` **before** `SessionAuthentication`, `api/token/` + `api/token/refresh/`. Smoke obtain-pair then Bearer GET `/api/services/`. Then spectacular. Leak demo last or a written skip note. Then m07 alerts (engine before dashboard).
+**Current position:** m06 remainder on `feat/jwt-openapi`. Page-number pagination in. Next: N+1 query counts in this file, then merge, then m07. Stash last.
+**Last session:** 2026-09-17 — Pagination. Typo `PAgeNumberPagination` vs settings `PageNumberPagination`; AI renamed `[!]`. List tests use `results`. No HealthCheck cursor.
+**Next action:** Measure list/detail query counts (N+1) and record in the numbers table. Then open PR / merge this branch. Then m07 alerts (engine, not dashboard).
 
 ---
 
@@ -55,13 +55,14 @@
 - [~] **m06** DRF API — first slice on `main` (PR #14). Remainder on `feat/jwt-openapi`
   - [x] `apps.api`, `Service.owner`, ReadOnly viewsets, `get_queryset` tenancy (404 not 403), `api_key` write_only
   - [x] POST poll/scan/acknowledge, throttles, `SessionAuthentication` (anon 403). Nested tests `[!]`
-  - [ ] JWT (`simplejwt`) + keep session — **lesson given 2026-09-17; not typed**
-  - [ ] drf-spectacular `/api/schema/` `/api/docs/`
-  - [ ] Build-the-list-leak then fix (`IsOwner` without `get_queryset`) — or written skip note
-  - [ ] django-filter, cursor pagination (no HealthCheck log — denormalized `last_health_ok`)
+  - [!] JWT (`simplejwt`) + keep session — package + token URLs user-typed; `JWTAuthentication` in REST_FRAMEWORK **AI-written 2026-09-17**
+  - [x] drf-spectacular `/api/schema/` `/api/docs/` — `SERVE_PERMISSIONS` AllowAny; `api_key` writeOnly in schema
+  - [!] List-leak: `IsOwner` + `get_queryset`. User built it; **`permission_class` typo AI-fixed** (must be `permission_classes`). Tests `[!]`
+  - [~] concepts/04 — leak taught; explain out loud: object perm ≠ list, 404 vs 403, plural attribute
+  - [!] django-filter — user typed backends; **`filterset_fileds` typo + missing INSTALLED_APPS `django_filters` AI-fixed**. `?kind=` / `?status=` / `?library=` / `?service=` stay inside `get_queryset`
+  - [!] Page-number pagination (`?page=` / `?page_size=`). Class typo `PAgeNumberPagination` AI-fixed. **No cursor** — no HealthCheck log; `last_health_ok` on Service
   - [ ] N+1 measurement recorded below
-  - [~] django/06 DRF — partial (viewsets/auth; not JWT/OpenAPI)
-  - [~] concepts/04 Authorization and tenancy — `get_queryset` taught; leak demo not built
+  - [~] django/06 DRF — JWT/OpenAPI/filter/page in; N+1 numbers not yet
 - [ ] **m07** Alerts — after this branch. Do not skip the engine for a dashboard
 - [ ] **m08** Performance pass
   - [ ] django/08 Testing Django
@@ -147,10 +148,10 @@
 
 ```
 ### 2026-09-17 — JWT lesson + PROGRESS backfill
-Did: Confirmed teaching contract. Repo is m00–m05 + m06 DRF slice on main (PRs #11–#14). Branch `feat/jwt-openapi`. Taught JWT + keep session (401 vs 403, access/refresh, token URLs outside the router). No simplejwt in requirements yet. User asked to update this file (was stuck on m04 2026-09-15).
-Struggled with: Progress lag vs git — do not trust the header without `git log`.
+Did: Confirmed teaching contract. Repo is m00–m05 + m06 DRF slice on main (PRs #11–#14). Branch `feat/jwt-openapi`. Taught JWT + keep session (401 vs 403, access/refresh, token URLs outside the router). User pip + INSTALLED_APPS + token views. AI granted: JWTAuthentication before SessionAuthentication; token paths above api include. `[!]`.
+Struggled with: REST_FRAMEWORK still session-only after installing simplejwt — token view worked, Bearer on /api/services/ did not. Progress lag vs git.
 Decided: One slice = JWT; spectacular next; leak demo last or skip note. m07 after this branch.
-Next: Type pip + INSTALLED_APPS + DEFAULT_AUTHENTICATION_CLASSES + token routes. Smoke obtain-pair and Bearer GET.
+Next: Smoke obtain-pair + Bearer GET. Then spectacular.
 ### 2026-09 (backfill from git, not live session notes)
 Did on main: m03 Beat/queues/retries (PR #11); m04 chunked scan + DiskItem.seen_at (PR #12); m05 reconcile skip ConnectorError + chain .s/.si (PR #13); m06 scoped ReadOnly API, owner, poll/scan/acknowledge, session auth (PR #14).
 Not done: JWT, spectacular, list-leak demo, django-filter, cursor pagination, N+1 numbers.

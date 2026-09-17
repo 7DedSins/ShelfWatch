@@ -4,6 +4,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
+from apps.api.tests.conftest import results
 from apps.services.models import Service
 
 User = get_user_model()
@@ -64,7 +65,7 @@ def test_list_only_own_services(api, users, services):
     api.force_authenticate(a)
     response = api.get("/api/services/")
     assert response.status_code == 200
-    names = {row["name"] for row in response.json()}
+    names = {row["name"] for row in results(response)}
     assert names == {sa.name}
 
 
@@ -73,7 +74,7 @@ def test_unowned_and_other_user_hidden(api, users, services):
     a, _b = users
     _sa, sb, orphan = services
     api.force_authenticate(a)
-    ids = {row["id"] for row in api.get("/api/services/").json()}
+    ids = {row["id"] for row in results(api.get("/api/services/"))}
     assert sb.pk not in ids
     assert orphan.pk not in ids
 
@@ -113,7 +114,7 @@ def test_own_detail_ok_and_api_key_absent(api, users, services):
 def test_list_does_not_serialize_api_key(api, users, services):
     a, _b = users
     api.force_authenticate(a)
-    body = api.get("/api/services/").json()
+    body = results(api.get("/api/services/"))
     assert all("api_key" not in row for row in body)
     assert "secret-alice" not in str(body)
 
@@ -135,7 +136,32 @@ def test_user_with_no_services_gets_empty_list(api, db):
     api.force_authenticate(lone)
     response = api.get("/api/services/")
     assert response.status_code == 200
-    assert response.json() == []
+    assert results(response) == []
+    assert response.json()["count"] == 0
+
+
+@pytest.mark.django_db
+def test_kind_query_param_filters_own_rows_only(api, users, services):
+    a, _b = users
+    sa, _sb, _orphan = services
+    Service.objects.create(
+        name="Alice LRR",
+        url="http://a-lrr.test",
+        owner=a,
+        kind=Service.Kind.LANRARAGI,
+    )
+    api.force_authenticate(a)
+    kavita = api.get("/api/services/?kind=kavita")
+    lrr = api.get("/api/services/?kind=lanraragi")
+    nope = api.get("/api/services/?kind=nope")
+    assert kavita.status_code == 200
+    assert lrr.status_code == 200
+    assert {row["name"] for row in results(kavita)} == {sa.name}
+    assert {row["name"] for row in results(lrr)} == {"Alice LRR"}
+    # Invalid choice is 400, not an empty list (FilterSet validates against Kind).
+    assert nope.status_code == 400
+    # Bob's lanraragi is not Alice's, even if kind matches.
+    assert all(row["name"] != "Bob LRR" for row in results(lrr))
 
 
 @pytest.mark.django_db

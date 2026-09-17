@@ -6,6 +6,7 @@ detail/poll/scan/acknowledge on another user's id is 404, not 403.
 
 from celery import chain
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -17,6 +18,7 @@ from apps.reconcile.tasks import reconcile_library
 from apps.services.models import Service
 from apps.services.tasks import poll_service
 
+from .permissions import IsOwner
 from .serializers import (
     DiscrepancySerializer,
     DiskItemSerializer,
@@ -51,6 +53,9 @@ class ServiceViewSet(ReadOnlyModelViewSet):
     """List/retrieve the caller's services. Writes stay in admin this milestone."""
 
     serializer_class = ServiceSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+    filterset_fields = ["kind"]
+    ordering_fields = ["name"]
 
     def get_queryset(self):
         return Service.objects.filter(owner=self.request.user)
@@ -67,6 +72,8 @@ class LibraryViewSet(ReadOnlyModelViewSet):
     """Libraries whose parent Service.owner is the caller."""
 
     serializer_class = LibrarySerializer
+    filterset_fields = ["service"]
+    ordering_fields = ["name"]
 
     def get_queryset(self):
         return Library.objects.filter(service__owner=self.request.user).select_related(
@@ -88,17 +95,23 @@ class DiskItemViewSet(ReadOnlyModelViewSet):
     """Per-folder scan rows. Nothing should POST these by hand."""
 
     serializer_class = DiskItemSerializer
+    filterset_fields = ["library"]
+    ordering_fields = ["relative_path"]
 
     def get_queryset(self):
-        return DiskItem.objects.filter(
-            library__service__owner=self.request.user
-        ).select_related("library")
+        return (
+            DiskItem.objects.filter(library__service__owner=self.request.user)
+            .select_related("library")
+            .order_by("relative_path", "pk")
+        )
 
 
 class DiscrepancyViewSet(ReadOnlyModelViewSet):
     """Diff rows. Create/resolve is the engine; clients may acknowledge."""
 
     serializer_class = DiscrepancySerializer
+    filterset_fields = ["status", "library", "kind"]
+    ordering_fields = ["opened_at", "id"]
 
     def get_queryset(self):
         return Discrepancy.objects.filter(
