@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.libraries",
     "apps.reconcile",
+    "apps.api",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -146,5 +148,18 @@ CELERY_BEAT_SCHEDULE = {
     "schedule-scans-every-60s": {
         "task": "apps.libraries.tasks.schedule_scans",
         "schedule": 60.0,
+    },
+}
+
+# Closed by default. /healthz/ is a Django view, not DRF — it stays public.
+# SessionAuthentication: anonymous API calls are 403 (not 401). JWT is later.
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication"
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "poll": "10/hour",
+        "scan": "5/hour",
     },
 }
