@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 from unittest.mock import patch
 
+from apps.api.tests.conftest import results
 from apps.libraries.models import DiskItem, Library
 from apps.reconcile.models import Discrepancy
 from apps.services.models import Service
@@ -60,7 +61,7 @@ def world(db):
 @pytest.mark.django_db
 def test_library_list_scoped(api, world):
     api.force_authenticate(world["a"])
-    ids = {row["id"] for row in api.get("/api/libraries/").json()}
+    ids = {row["id"] for row in results(api.get("/api/libraries/"))}
     assert ids == {world["la"].pk}
 
 
@@ -73,7 +74,7 @@ def test_other_library_detail_404(api, world):
 @pytest.mark.django_db
 def test_disk_items_scoped(api, world):
     api.force_authenticate(world["a"])
-    ids = {row["id"] for row in api.get("/api/disk-items/").json()}
+    ids = {row["id"] for row in results(api.get("/api/disk-items/"))}
     assert ids == {world["da"].pk}
     assert api.get(f"/api/disk-items/{world['db_item'].pk}/").status_code == 404
 
@@ -81,7 +82,7 @@ def test_disk_items_scoped(api, world):
 @pytest.mark.django_db
 def test_discrepancies_scoped(api, world):
     api.force_authenticate(world["a"])
-    ids = {row["id"] for row in api.get("/api/discrepancies/").json()}
+    ids = {row["id"] for row in results(api.get("/api/discrepancies/"))}
     assert ids == {world["disc_a"].pk}
     assert api.get(f"/api/discrepancies/{world['disc_b'].pk}/").status_code == 404
 
@@ -98,6 +99,38 @@ def test_acknowledge_own_not_others(api, world):
         api.post(f"/api/discrepancies/{world['disc_b'].pk}/acknowledge/").status_code
         == 404
     )
+
+
+@pytest.mark.django_db
+def test_discrepancy_filters_status_and_library_stay_scoped(api, world):
+    api.force_authenticate(world["a"])
+    Discrepancy.objects.create(
+        library=world["la"],
+        kind="missing_on_disk",
+        key="ack-me",
+        status=Discrepancy.Status.ACKNOWLEDGED,
+    )
+    open_rows = results(api.get("/api/discrepancies/?status=open"))
+    ack_rows = results(api.get("/api/discrepancies/?status=acknowledged"))
+    assert {row["key"] for row in open_rows} == {"solo"}
+    assert {row["key"] for row in ack_rows} == {"ack-me"}
+    own_lib = results(api.get(f"/api/discrepancies/?library={world['la'].pk}"))
+    bob_lib = results(api.get(f"/api/discrepancies/?library={world['lb'].pk}"))
+    assert {row["key"] for row in own_lib} == {"solo", "ack-me"}
+    assert bob_lib == []
+
+
+@pytest.mark.django_db
+def test_library_and_disk_item_query_params(api, world):
+    api.force_authenticate(world["a"])
+    own = results(api.get(f"/api/libraries/?service={world['sa'].pk}"))
+    other = results(api.get(f"/api/libraries/?service={world['sb'].pk}"))
+    assert {row["id"] for row in own} == {world["la"].pk}
+    assert other == []
+    items = results(api.get(f"/api/disk-items/?library={world['la'].pk}"))
+    leaked = results(api.get(f"/api/disk-items/?library={world['lb'].pk}"))
+    assert {row["id"] for row in items} == {world["da"].pk}
+    assert leaked == []
 
 
 @pytest.mark.django_db

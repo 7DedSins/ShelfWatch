@@ -87,12 +87,25 @@ in two paradigms and can argue the trade-off from experience rather than opinion
 
 ---
 
+## Phase 7 — Lookout / full fleet (optional, after m06 JWT)
+
+Not the Django spine. When the phone (and admin) must report the
+**whole Contabo box** — FUSE, timers/cron, Redis/Celery, Stash ping,
+future containers — and run the documented remount:
+
+[07-lookout-and-fleet.md](07-lookout-and-fleet.md) → implement from
+[Lookout `docs/07-fleet/`](../../Lookout/docs/07-fleet/README.md).
+
+---
+
 ## Dependency graph
 
 ```
 m00 ──> m01 ──> m02 ──> m03 ──> m04 ──> m05 ──┬──> m06 ──> m08 ──> ops
                                               │            │
-                                              └──> m07     └──> frontend (×2)
+                                              └──> m07     ├──> frontend (×2)
+                                                           └──> Lookout (other repo)
+                                                                └── apps.fleet / 07-fleet (optional)
 ```
 
 ---

@@ -3,9 +3,9 @@
 > **This file is the state of the project.** Update it every session. An AI resuming your work
 > reads this first.
 
-**Current position:** m04 on `feat/library-scan` (uncommitted). m03 Beat/queues/retries + pytest CI on `main` (PR #11). Lock/starvation still need Redis. Then bulk scan → m05. Stash last.
-**Last session:** 2026-09-15 — Library/DiskItem/StorageSnapshot + naive `scan_library` (`update_or_create`). UTC; `seen_at` detects deletes without removing rows.
-**Next action:** Time naive upsert vs chunked `bulk_create`. Then task on `scans` queue. Do not skip m05.
+**Current position:** m06 remainder on `feat/jwt-openapi`. Page-number pagination in. Next: N+1 query counts in this file, then merge, then m07. Stash last.
+**Last session:** 2026-09-17 — Pagination. Typo `PAgeNumberPagination` vs settings `PageNumberPagination`; AI renamed `[!]`. List tests use `results`. No HealthCheck cursor.
+**Next action:** Measure list/detail query counts (N+1) and record in the numbers table. Then open PR / merge this branch. Then m07 alerts (engine, not dashboard).
 
 ---
 
@@ -38,22 +38,32 @@
 
 ## Phase 2 — The engine
 
-- [~] **m03** Celery and polling — PRs #10–#11 on main; lock/starvation/two workers not started
-  - [~] django/07 — settings + retries taught; two workers / `.s` vs `.si` / lock not done
+- [~] **m03** Celery and polling — PRs #10–#11 on `main`. Lock/starvation/two workers still not started (needs Redis)
+  - [~] django/07 — settings + retries taught; two workers / lock not done; `.s` vs `.si` used on scan→reconcile chain
   - [~] concepts/02 — taught; lock not implemented
-  - [x] `poll_interval_seconds` + naive `schedule_polls`; tests `[!]`
+  - [x] `poll_interval_seconds` + `schedule_polls`; persist then re-raise; tests `[!]`
   - [x] Beat + `default`/`scans` routes + Unavailable retries + pytest GHA `[!]` tests
-- [~] **m04** Library scanning — models + naive `scan_library` on `feat/library-scan`
-  - [~] django/04 ORM — N+1/bulk taught; timings not recorded yet
-- [ ] **m05** Reconciliation *(tests first)*
-- [ ] **CHECKPOINT** — first system-design drill
+- [x] **m04** Library scanning — PR #12 on `main` (`feat(m04): library scan with chunked upsert, snapshot, schedule`)
+  - `Library` / `DiskItem` / `StorageSnapshot`; `seen_at` vs `last_scanned_at`; `remote_id`; scan task on `scans`
+  - [~] django/04 ORM — N+1/bulk taught; **timings still empty** in the numbers table
+- [x] **m05** Reconciliation — PR #13 on `main`. `diff_inventories` + `Discrepancy`; skip `ConnectorError` (never treat as `[]`); `chain(.s, .si)`
+  - Failed-fetch vs empty inventory still `[!]` until explained out loud
+- [ ] **CHECKPOINT** — first system-design drill (due after m05; skipped so far)
 
 ## Phase 3 — Interfaces
 
-- [ ] **m06** DRF API
-  - [ ] django/06 DRF
-  - [ ] concepts/04 Authorization and tenancy
-- [ ] **m07** Alerts
+- [~] **m06** DRF API — first slice on `main` (PR #14). Remainder on `feat/jwt-openapi`
+  - [x] `apps.api`, `Service.owner`, ReadOnly viewsets, `get_queryset` tenancy (404 not 403), `api_key` write_only
+  - [x] POST poll/scan/acknowledge, throttles, `SessionAuthentication` (anon 403). Nested tests `[!]`
+  - [!] JWT (`simplejwt`) + keep session — package + token URLs user-typed; `JWTAuthentication` in REST_FRAMEWORK **AI-written 2026-09-17**
+  - [x] drf-spectacular `/api/schema/` `/api/docs/` — `SERVE_PERMISSIONS` AllowAny; `api_key` writeOnly in schema
+  - [!] List-leak: `IsOwner` + `get_queryset`. User built it; **`permission_class` typo AI-fixed** (must be `permission_classes`). Tests `[!]`
+  - [~] concepts/04 — leak taught; explain out loud: object perm ≠ list, 404 vs 403, plural attribute
+  - [!] django-filter — user typed backends; **`filterset_fileds` typo + missing INSTALLED_APPS `django_filters` AI-fixed**. `?kind=` / `?status=` / `?library=` / `?service=` stay inside `get_queryset`
+  - [!] Page-number pagination (`?page=` / `?page_size=`). Class typo `PAgeNumberPagination` AI-fixed. **No cursor** — no HealthCheck log; `last_health_ok` on Service
+  - [ ] N+1 measurement recorded below
+  - [~] django/06 DRF — JWT/OpenAPI/filter/page in; N+1 numbers not yet
+- [ ] **m07** Alerts — after this branch. Do not skip the engine for a dashboard
 - [ ] **m08** Performance pass
   - [ ] django/08 Testing Django
 
@@ -78,6 +88,13 @@
 - [ ] Question bank Section C without notes
 - [ ] System-design drill: 3 clean passes
 
+## Phase 7 — Lookout / full fleet (optional)
+
+- [ ] [07-lookout-and-fleet.md](07-lookout-and-fleet.md) read
+- [ ] `apps.fleet` snapshots (`GET /api/fleet/latest/`)
+- [ ] Allowlisted actions + audit (flag off on demo)
+- [ ] Stash: container + GraphQL ping before full inventory connector
+
 ---
 
 ## Decisions I have made and why
@@ -98,6 +115,11 @@
 | Watch **every app on the VPS**, not only manga readers | 2026-09-09: live set is Kavita, LANraragi, Stash (Komga not running). Stash is in scope; it does not fit library/series without stretching the ABC. |
 | Order: poll → Celery → engine → Stash last | Naive Django poll first (no Redis). Celery when Redis exists (VPS). Disk/reconcile on Kavita+LRR before a Stash GraphQL client. |
 | Teaching: code in chat, then I type | 2026-09-11. Drop skeleton-first. AI pastes one slice in chat with gotchas; I type; AI does not write implementation files. `[!]` if I cannot explain a line. |
+| Exception 2026-09: tests + `[!]` + corrections | Walkthrough in chat; user types implementation. Persist-then-raise and empty-vs-`[]` must be explainable. |
+| JWT + session together | Session for browsable API/cookie; Bearer for Lookout/React. Adding JWT flips anon from 403→401 (`WWW-Authenticate`). Tests already allow both. |
+| No HealthCheck log for cursor demo | Health is denormalized on `Service.last_health_ok`. Cursor pagination needs another append-only table or a written skip. |
+| m07 alerts before a dashboard | Dedupe/batch/flap engine first. Lookout/fleet is Phase 7 after JWT. |
+| Branch `feat/jwt-openapi` | Not `feat/m06-jwt-openapi`. Do not start m07 on this branch. |
 
 ---
 
@@ -125,6 +147,14 @@
 ## Session log
 
 ```
+### 2026-09-17 — JWT lesson + PROGRESS backfill
+Did: Confirmed teaching contract. Repo is m00–m05 + m06 DRF slice on main (PRs #11–#14). Branch `feat/jwt-openapi`. Taught JWT + keep session (401 vs 403, access/refresh, token URLs outside the router). User pip + INSTALLED_APPS + token views. AI granted: JWTAuthentication before SessionAuthentication; token paths above api include. `[!]`.
+Struggled with: REST_FRAMEWORK still session-only after installing simplejwt — token view worked, Bearer on /api/services/ did not. Progress lag vs git.
+Decided: One slice = JWT; spectacular next; leak demo last or skip note. m07 after this branch.
+Next: Smoke obtain-pair + Bearer GET. Then spectacular.
+### 2026-09 (backfill from git, not live session notes)
+Did on main: m03 Beat/queues/retries (PR #11); m04 chunked scan + DiskItem.seen_at (PR #12); m05 reconcile skip ConnectorError + chain .s/.si (PR #13); m06 scoped ReadOnly API, owner, poll/scan/acknowledge, session auth (PR #14).
+Not done: JWT, spectacular, list-leak demo, django-filter, cursor pagination, N+1 numbers.
 ### 2026-09-07 — Kavita connector + AI tests
 Did: User typed kavita.py (JWT, libraries, all-v2 series + client filter). AI added comments, json/params keywords, series JSON guard; respx suite (8 tests). User granted this — cannot defend tests until explained.
 Struggled with: DevTools empty on Tailscale UI; `/library/7` vs `/api/Library/libraries`; `_send` not forwarding json; int vs str libraryId.

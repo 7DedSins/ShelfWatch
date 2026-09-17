@@ -35,6 +35,9 @@ INSTALLED_APPS = [
     "apps.reconcile",
     "apps.api",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "drf_spectacular",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -152,14 +155,31 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # Closed by default. /healthz/ is a Django view, not DRF — it stays public.
-# SessionAuthentication: anonymous API calls are 403 (not 401). JWT is later.
+# JWT first: anonymous API is 401 (WWW-Authenticate: Bearer).
+# Session stays so the browsable API can use the login cookie.
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication"
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_THROTTLE_RATES": {
         "poll": "10/hour",
         "scan": "5/hour",
     },
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "apps.api.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "ShelfWatch API",
+    "DESCRIPTION": "Scoped read API plus poll/scan/acknowledge.",
+    "VERSION": "0.1.0",
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_AUTHENTICATION": None,
 }
