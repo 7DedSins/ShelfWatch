@@ -13,6 +13,14 @@ class Service(models.Model):
 
     name = models.CharField(max_length=200, unique=True)
     url = models.URLField(max_length=200)
+    # API tenancy. Null = hidden from /api/ (legacy rows / tests without a user).
+    owner = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="services",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     api_key = EncryptedTextField(blank=True)
