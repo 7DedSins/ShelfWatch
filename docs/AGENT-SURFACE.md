@@ -166,7 +166,7 @@ Recorded so these stay decided.
 | LLM-generated "summaries" of scan results | A reconciliation delta is already the summary. This is the padding an interviewer spots. |
 | Embedding-based fuzzy series matching | Genuinely tempting — matching disk names to service names is the real hard problem — but it needs a model on a box with no GPU and ~1.5 GiB free. `rapidfuzz` on CPU is the honest first answer, and it is not an agent feature. Revisit only if deterministic matching demonstrably fails. |
 | Any tool that writes to a watched service | Breaks the read-only guarantee, which is the entire safety argument. Non-negotiable. |
-| Agent that "fixes" detected problems | Same, plus it fights the guardrails in `Contabo/README.md` §3. |
+| Agent that "fixes" detected problems | Same, plus it fights the guardrails in `Contabo/README.md` §3. Human-confirmed fleet actions (`remount_fuse`) are specified in [Lookout 07-fleet](../../Lookout/docs/07-fleet/) and [07-lookout-and-fleet.md](07-lookout-and-fleet.md) — still not an MCP tool. |
 
 ---
 

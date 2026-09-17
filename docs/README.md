@@ -81,6 +81,7 @@ you have done [Colophon](../../Colophon/docs/) first.
 | [04-frontend/](04-frontend/) | **The dashboard, built twice** — Django templates, then React. |
 | [05-ops/](05-ops/) | Deployment to Contabo, monitoring, the public demo instance. |
 | [06-interview/](06-interview/) | Question bank. |
+| [07-lookout-and-fleet.md](07-lookout-and-fleet.md) | Pointer: Android client + later whole-VPS/`apps.fleet`. Detail is in Lookout `docs/07-fleet/`. |
 | [reference/](reference/) | ⚠️ The original implementation plan — **contains the answers.** |
 
 ---
